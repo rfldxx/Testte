@@ -7,6 +7,7 @@
     body { font-family: sans-serif; padding: 20px; }
     input { font-size: 1.2em; padding: 6px; width: 180px; }
     .row { margin-bottom: 12px; }
+    .counter { color: #666; font-style: italic; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -18,20 +19,56 @@
   <div class="row">
     Результат: <span id="result">-</span>
   </div>
+  
+  <!-- Добавлен блок для счетчика -->
+  <div class="row counter">
+    Количество отправок: <span id="counter">0</span>
+  </div>
 
   <script>
-    // Объявляем Module до загрузки app.js
     var Module = {
       onRuntimeInitialized: function() {
         var input = document.getElementById('expr');
         var result = document.getElementById('result');
+        var counterElement = document.getElementById('counter');
+        
+        // Инициализация счетчика (берём из localStorage или 0)
+        let submissionCount = parseInt(localStorage.getItem('submissionCount')) || 0;
+        counterElement.textContent = submissionCount;
 
-        let c = 0;
         input.addEventListener('input', function() {
           var v = input.value;
-          // Вызов через ccall: вернуть number, принимаем string
-          var r = c++; // Module.ccall('compute', 'number', ['string'], [v]);
-          result.textContent = r;
+          
+          // Увеличиваем счетчик при каждой отправке
+          submissionCount++;
+          counterElement.textContent = submissionCount;
+          
+          // Сохраняем в localStorage, чтобы счетчик сохранялся между перезагрузками
+          localStorage.setItem('submissionCount', submissionCount);
+          
+          // Вызов WebAssembly функции для вычисления
+          // Раскомментируйте, когда функция будет готова
+          // var r = Module.ccall('compute', 'number', ['string'], [v]);
+          // result.textContent = r;
+          
+          // Временно показываем значение счетчика для демонстрации
+          result.textContent = submissionCount;
+        });
+        
+        // Для тестирования также можно добавить обработчик Enter
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            // То же самое, что и при input
+            var v = input.value;
+            
+            submissionCount++;
+            counterElement.textContent = submissionCount;
+            localStorage.setItem('submissionCount', submissionCount);
+            
+            // var r = Module.ccall('compute', 'number', ['string'], [v]);
+            // result.textContent = r;
+            result.textContent = submissionCount;
+          }
         });
       }
     };
