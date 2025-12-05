@@ -30,6 +30,7 @@
           var v = input.value;
           // Вызов через ccall: вернуть number, принимаем string
           var r = Module.ccall('compute', 'number', ['string'], [v]);
+          if ( r == null ) r = 50;
           result.textContent = r;
         });
       }
