@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Compute a+b via WebAssembly</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input { font-size: 1.2em; padding: 6px; width: 180px; }
+    .row { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Вычислить a + b (формат: "a+b", где a и b — цифры)</h1>
+
+  <div class="row">
+    <input id="expr" type="text" placeholder="Введите a+b" />
+  </div>
+  <div class="row">
+    Результат: <span id="result">-</span>
+  </div>
+
+  <script>
+    // Объявляем Module до загрузки app.js
+    var Module = {
+      onRuntimeInitialized: function() {
+        var input = document.getElementById('expr');
+        var result = document.getElementById('result');
+
+        input.addEventListener('input', function() {
+          var v = input.value;
+          // Вызов через ccall: вернуть number, принимаем string
+          var r = Module.ccall('compute', 'number', ['string'], [v]);
+          result.textContent = r;
+        });
+      }
+    };
+  </script>
+
+  <!-- Глобальная обвязка от Emscripten -->
+  <script src="app.js"></script>
+</body>
+</html>
