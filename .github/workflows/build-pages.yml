@@ -17,19 +17,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install EMSDK
+      - name: Check EMSDK repo accessibility
         run: |
-          # Скачиваем EMSDK и готовим его к использованию
-          git clone https://github.com/emscripten-core/emsdk.git
+          echo "Проверяем доступность EMSDK репозитория..."
+          git ls-remote https://github.com/emscripten-core/emsdk.git HEAD
+        shell: bash
+
+      - name: Install EMSDK (shallow clone)
+        run: |
+          echo "Клонируем EMSDK (depth 1) чтобы быстрее и надёжнее."
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
           cd emsdk
           ./emsdk install 3.1.9
           ./emsdk activate 3.1.9
-          cd ..
+          source ./emsdk_env.sh
         shell: bash
 
       - name: Build WASM
         run: |
-          # Подключаем окружение EMSDK и собираем
           source ./emsdk/emsdk_env.sh
           emcc compute.cpp -O2 \
             -s WASM=1 \
