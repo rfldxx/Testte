@@ -1,0 +1,44 @@
+name: Build WASM and Deploy to Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Emscripten
+        uses: emscripten-core/setup-emsdk@v1
+        with:
+          emsdk-version: '3.1.9'  # можно заменить на нужную версию
+
+      - name: Build WASM
+        run: |
+          source /opt/emsdk/emsdk_env.sh
+          emcc compute.cpp -O2 \
+            -s WASM=1 \
+            -s EXPORTED_FUNCTIONS="['_compute']" \
+            -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall','cwrap']" \
+            -o app.js
+
+      - name: Prepare docs
+        run: |
+          mkdir -p docs
+          # Перемещаем/копируем необходимые файлы в docs
+          cp index.html app.js app.wasm docs/
+
+      - name: Deploy to Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
