@@ -17,25 +17,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Emscripten
-        uses: emscripten-core/setup-emsdk@v1
-        with:
-          emsdk-version: '3.1.9'  # можно заменить на нужную версию
+      - name: Install EMSDK
+        run: |
+          # Скачиваем EMSDK и готовим его к использованию
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install 3.1.9
+          ./emsdk activate 3.1.9
+          cd ..
+        shell: bash
 
       - name: Build WASM
         run: |
-          source /opt/emsdk/emsdk_env.sh
+          # Подключаем окружение EMSDK и собираем
+          source ./emsdk/emsdk_env.sh
           emcc compute.cpp -O2 \
             -s WASM=1 \
             -s EXPORTED_FUNCTIONS="['_compute']" \
             -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall','cwrap']" \
             -o app.js
+        shell: bash
 
       - name: Prepare docs
         run: |
           mkdir -p docs
-          # Перемещаем/копируем необходимые файлы в docs
           cp index.html app.js app.wasm docs/
+        shell: bash
 
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3
