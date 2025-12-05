@@ -1,56 +1,56 @@
-name: Build WASM and Deploy to Pages
+# name: Build WASM and Deploy to Pages
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
+# jobs:
+#   build-and-deploy:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: read
+#       pages: write
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Check EMSDK repo accessibility
-        run: |
-          echo "Проверяем доступность EMSDK репозитория..."
-          git ls-remote https://github.com/emscripten-core/emsdk.git HEAD
-        shell: bash
+#       - name: Check EMSDK repo accessibility
+#         run: |
+#           echo "Проверяем доступность EMSDK репозитория..."
+#           git ls-remote https://github.com/emscripten-core/emsdk.git HEAD
+#         shell: bash
 
-      - name: Install EMSDK (shallow clone)
-        run: |
-          echo "Клонируем EMSDK (depth 1) чтобы быстрее и надёжнее."
-          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install 3.1.9
-          ./emsdk activate 3.1.9
-          source ./emsdk_env.sh
-        shell: bash
+#       - name: Install EMSDK (shallow clone)
+#         run: |
+#           echo "Клонируем EMSDK (depth 1) чтобы быстрее и надёжнее."
+#           git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+#           cd emsdk
+#           ./emsdk install 3.1.9
+#           ./emsdk activate 3.1.9
+#           source ./emsdk_env.sh
+#         shell: bash
 
-      - name: Build WASM
-        run: |
-          source ./emsdk/emsdk_env.sh
-          emcc compute.cpp -O2 \
-            -s WASM=1 \
-            -s EXPORTED_FUNCTIONS="['_compute']" \
-            -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall','cwrap']" \
-            -o app.js
-        shell: bash
+#       - name: Build WASM
+#         run: |
+#           source ./emsdk/emsdk_env.sh
+#           emcc compute.cpp -O2 \
+#             -s WASM=1 \
+#             -s EXPORTED_FUNCTIONS="['_compute']" \
+#             -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall','cwrap']" \
+#             -o app.js
+#         shell: bash
 
-      - name: Prepare docs
-        run: |
-          mkdir -p docs
-          cp index.html app.js app.wasm docs/
-        shell: bash
+#       - name: Prepare docs
+#         run: |
+#           mkdir -p docs
+#           cp index.html app.js app.wasm docs/
+#         shell: bash
 
-      - name: Deploy to Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+#       - name: Deploy to Pages
+#         uses: peaceiris/actions-gh-pages@v3
+#         with:
+#           github_token: ${{ secrets.GITHUB_TOKEN }}
+#           publish_dir: ./docs
