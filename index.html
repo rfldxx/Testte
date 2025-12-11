@@ -1,115 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Compute a+b via WebAssembly</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input { font-size: 1.2em; padding: 6px; width: 180px; }
-    .row { margin-bottom: 12px; }
-    .counter { color: #666; font-style: italic; margin-top: 20px; }
-    button { font-size: 1.1em; padding: 6px 16px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAssembly Fibonacci</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
-  <h1>Вычислить a + b (формат: "a+b", где a и b — цифры)</h1>
-
-  <div class="row">
-    <input id="expr" type="text" placeholder="Введите a+b" />
-    <button id="computeBtn">Вычислить</button>
-  </div>
-  <div class="row">
-    Результат: <span id="result">-</span>
-  </div>
-  
-  <!-- Добавлен блок для счетчика -->
-  <div class="row counter">
-    Количество отправок: <span id="counter">0</span>
-  </div>
-
-  <script>
-    // Объявляем Module до загрузки app.js
-    var Module = {
-      onRuntimeInitialized: function() {
-        var input = document.getElementById('expr');
-        var result = document.getElementById('result');
-        var computeBtn = document.getElementById('computeBtn');
-        var counterElement = document.getElementById('counter');
+    <div class="container">
+        <h1>🔢 Калькулятор Фибоначчи на WebAssembly (очередная ai попытка)</h1>
+        <p>Введите номер числа Фибоначчи:</p>
+        <input type="number" id="fibInput" min="0" max="50" value="10">
+        <button onclick="calculateSingle()">Вычислить одно число</button>
+        <button onclick="calculateSequence()">Вычислить последовательность</button>
         
-        // Инициализация счетчика (берём из localStorage или 0)
-        let submissionCount = parseInt(localStorage.getItem('submissionCount')) || 0;
-        counterElement.textContent = submissionCount;
-
-        // Функция для обработки отправки
-        function processSubmission() {
-          var v = input.value.trim();
-          
-          if (v) { // Проверяем, что строка не пустая
-            // Увеличиваем счетчик
-            submissionCount++;
-            counterElement.textContent = submissionCount;
-            
-            // Сохраняем в localStorage
-            localStorage.setItem('submissionCount', submissionCount);
-            
-            // Вывод результата (временный, вместо WASM)
-            result.textContent = `Отправлено: "${v}" (счетчик: ${submissionCount})`;
-            
-            // Очищаем поле (опционально)
-            // input.value = '';
-          }
-        }
-
-        // Обработчик нажатия кнопки
-        computeBtn.addEventListener('click', processSubmission);
-
-        // Обработчик нажатия Enter в поле ввода
-        input.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') {
-            processSubmission();
-          }
-        });
-
-        // Для мобильных устройств также можно обрабатывать событие 'input' 
-        // при завершении ввода (но лучше использовать кнопку или Enter)
-        // input.addEventListener('change', processSubmission);
-      }
-    };
-    
-    // Если WebAssembly не загружается сразу, инициализируем счетчик
-    setTimeout(function() {
-      if (!document.getElementById('counter').textContent) {
-        let count = parseInt(localStorage.getItem('submissionCount')) || 0;
-        document.getElementById('counter').textContent = count;
+        <div id="result" class="result"></div>
         
-        // Устанавливаем обработчики даже без Module
-        var input = document.getElementById('expr');
-        var result = document.getElementById('result');
-        var computeBtn = document.getElementById('computeBtn');
-        var counterElement = document.getElementById('counter');
-        
-        let submissionCount = count;
-        
-        function processSubmission() {
-          var v = input.value.trim();
-          
-          if (v) {
-            submissionCount++;
-            counterElement.textContent = submissionCount;
-            localStorage.setItem('submissionCount', submissionCount);
-            result.textContent = `Отправлено: "${v}" (счетчик: ${submissionCount})`;
-          }
-        }
-        
-        computeBtn.addEventListener('click', processSubmission);
-        input.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') processSubmission();
-        });
-      }
-    }, 1000); // Даем время на загрузку Module
-  </script>
+        <div style="margin-top: 30px; font-size: 14px; color: #666;">
+            <h3>📊 Информация:</h3>
+            <p>• Код на C++ скомпилирован в WebAssembly</p>
+            <p>• Вычисления выполняются в браузере</p>
+            <p>• Проект размещен на GitHub Pages</p>
+        </div>
+    </div>
 
-  <!-- Глобальная обвязка от Emscripten -->
-  <script src="app.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
