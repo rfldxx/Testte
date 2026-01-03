@@ -1,55 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WASM Demo</title>
 </head>
 <body>
-    <h2>WASM Function Demo: f(x) = x * 3</h2>
+    <h1>WASM Function Demo</h1>
     
-    <input type="number" id="input" value="7" style="padding: 8px; font-size: 16px;">
-    <button onclick="calc()" style="padding: 8px 16px; font-size: 16px;">Calculate</button>
+    <div>
+        <label for="input">Введите число:</label>
+        <input type="number" id="input" value="5">
+        <button id="calculate">Рассчитать f(x)</button>
+    </div>
     
-    <div id="result" style="margin-top: 20px; font-size: 18px; font-weight: bold;"></div>
+    <div>
+        <h3>Результат:</h3>
+        <div id="output">-</div>
+    </div>
 
     <script>
-        // Простой загрузчик WASM
-        async function init() {
-            // 1. Загружаем WASM файл
-            const response = await fetch('main.wasm');
-            const bytes = await response.arrayBuffer();
-            
-            // 2. Компилируем и создаём экземпляр
-            const { instance } = await WebAssembly.instantiate(bytes);
-            
-            // 3. Сохраняем экспортированные функции
-            window.wasmExports = instance.exports;
-            
-            console.log('WASM loaded!');
+        // Загрузка и инициализация WASM модуля
+        let wasmModule;
+        
+        async function loadWasm() {
+            try {
+                const response = await fetch('f.wasm');
+                const bytes = await response.arrayBuffer();
+                const wasm = await WebAssembly.instantiate(bytes, {});
+                wasmModule = wasm.instance.exports;
+                console.log('WASM модуль загружен успешно');
+            } catch (error) {
+                console.error('Ошибка загрузки WASM:', error);
+                document.getElementById('output').textContent = 
+                    'Ошибка загрузки WASM модуля. Убедитесь, что f.wasm доступен.';
+            }
         }
         
-        // Функция для вычисления
-        function calc() {
-            if (!window.wasmExports) {
-                alert('WASM not loaded yet!');
+        // Обработчик кнопки
+        document.getElementById('calculate').addEventListener('click', () => {
+            if (!wasmModule) {
+                document.getElementById('output').textContent = 
+                    'WASM модуль еще не загружен';
                 return;
             }
             
             const input = document.getElementById('input');
             const value = parseInt(input.value) || 0;
             
-            // Вызываем WASM функцию
-            const result = window.wasmExports.f(value);
-            
-            // Показываем результат
-            document.getElementById('result').textContent = 
-                `f(${value}) = ${value} * 3 = ${result}`;
-        }
-        
-        // Загружаем WASM при загрузке страницы
-        init().catch(error => {
-            console.error('Failed to load WASM:', error);
-            document.getElementById('result').textContent = 'Error loading WASM';
+            try {
+                const result = wasmModule.f(value);
+                document.getElementById('output').textContent = 
+                    `f(${value}) = ${result}`;
+            } catch (error) {
+                console.error('Ошибка выполнения WASM функции:', error);
+                document.getElementById('output').textContent = 
+                    'Ошибка выполнения функции';
+            }
         });
+        
+        // Загрузка модуля при открытии страницы
+        loadWasm();
     </script>
 </body>
 </html>
