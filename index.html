@@ -3,59 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WASM Demo</title>
+    <title>WASM Class Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
+        .input-group { margin: 15px 0; }
+        label { display: inline-block; width: 50px; }
+        input { padding: 8px; width: 100px; }
+        button { padding: 10px 20px; background: #007acc; color: white; border: none; cursor: pointer; }
+        button:hover { background: #005fa3; }
+        .result { margin: 20px 0; padding: 15px; background: #f5f5f5; }
+    </style>
 </head>
 <body>
-    <h1>WASM Function Demo</h1>
+    <h1>WASM Class Demo</h1>
+    <p>Создание экземпляра C++ класса и вызов его методов</p>
     
-    <div>
-        <label for="input">Введите число:</label>
-        <input type="number" id="input" value="5">
-        <button id="calculate">Рассчитать f(x)</button>
+    <div class="input-group">
+        <label for="inputX">x:</label>
+        <input type="number" id="inputX" value="5">
     </div>
     
-    <div>
-        <h3>Результат:</h3>
-        <div id="output">-</div>
+    <div class="input-group">
+        <label for="inputY">y:</label>
+        <input type="number" id="inputY" value="3">
+    </div>
+    
+    <button id="calculate">Создать Calc(x) и вызвать методы</button>
+    
+    <div class="result">
+        <h3>Результаты:</h3>
+        <div><strong>f(y) = x * y:</strong> <span id="outputF">-</span></div>
+        <div><strong>g() возвращает строку:</strong> <span id="outputG">-</span></div>
+        <div><strong>Статус:</strong> <span id="status">Готов</span></div>
     </div>
 
     <script>
-        // Загрузка и инициализация WASM модуля
         let wasmModule;
+        let memory; // Память WASM
+        
+        // Функции, которые мы будем использовать
+        let createCalc, calcF, calcG, freeString, deleteCalc;
         
         async function loadWasm() {
             try {
-                const response = await fetch('f.wasm');
+                document.getElementById('status').textContent = 'Загрузка WASM...';
+                const response = await fetch('calc.wasm');
                 const bytes = await response.arrayBuffer();
-                const wasm = await WebAssembly.instantiate(bytes, {});
+                
+                // Инициализация модуля с импортами
+                const wasm = await WebAssembly.instantiate(bytes, {
+                    env: {
+                        // Здесь можно добавить функции, если нужно
+                    }
+                });
+                
                 wasmModule = wasm.instance.exports;
-                console.log('WASM модуль загружен успешно');
+                memory = wasmModule.memory;
+                
+                // Получаем функции из модуля
+                createCalc = wasmModule.createCalc;
+                calcF = wasmModule.calcF;
+                calcG = wasmModule.calcG;
+                freeString = wasmModule.freeString;
+                deleteCalc = wasmModule.deleteCalc;
+                
+                document.getElementById('status').textContent = 'WASM загружен успешно!';
+                console.log('WASM модуль загружен, доступные функции:', Object.keys(wasmModule));
+                
             } catch (error) {
                 console.error('Ошибка загрузки WASM:', error);
-                document.getElementById('output').textContent = 
-                    'Ошибка загрузки WASM модуля. Убедитесь, что f.wasm доступен.';
+                document.getElementById('status').textContent = 'Ошибка загрузки WASM: ' + error.message;
             }
+        }
+        
+        // Функция для чтения строки из памяти WASM
+        function readWasmString(ptr) {
+            const memoryView = new Uint8Array(memory.buffer);
+            let length = 0;
+            
+            // Ищем конец строки (нулевой байт)
+            while (memoryView[ptr + length] !== 0) {
+                length++;
+            }
+            
+            // Создаём массив байтов строки
+            const stringBytes = new Uint8Array(memory.buffer, ptr, length);
+            
+            // Преобразуем в строку JavaScript
+            return new TextDecoder().decode(stringBytes);
         }
         
         // Обработчик кнопки
         document.getElementById('calculate').addEventListener('click', () => {
             if (!wasmModule) {
-                document.getElementById('output').textContent = 
-                    'WASM модуль еще не загружен';
+                document.getElementById('status').textContent = 'WASM модуль ещё не загружен';
                 return;
             }
             
-            const input = document.getElementById('input');
-            const value = parseInt(input.value) || 0;
+            const x = parseInt(document.getElementById('inputX').value) || 0;
+            const y = parseInt(document.getElementById('inputY').value) || 0;
             
             try {
-                const result = wasmModule.f(value);
-                document.getElementById('output').textContent = 
-                    `f(${value}) = ${result}`;
+                document.getElementById('status').textContent = 'Выполнение...';
+                
+                // 1. Создаём экземпляр класса Calc
+                const calcPtr = createCalc(x);
+                console.log('Создан Calc с указателем:', calcPtr);
+                
+                // 2. Вызываем метод f
+                const resultF = calcF(calcPtr, y);
+                document.getElementById('outputF').textContent = 
+                    `f(${y}) = ${resultF}`;
+                
+                // 3. Вызываем метод g (возвращает указатель на строку)
+                const stringPtr = calcG(calcPtr);
+                console.log('Указатель на строку:', stringPtr);
+                
+                // 4. Читаем строку из памяти WASM
+                const resultG = readWasmString(stringPtr);
+                document.getElementById('outputG').textContent = resultG;
+                
+                // 5. Освобождаем память строки
+                freeString(stringPtr);
+                
+                // 6. Удаляем экземпляр класса
+                deleteCalc(calcPtr);
+                
+                document.getElementById('status').textContent = 
+                    `Успешно! Создан Calc(${x}), вызваны методы f(${y}) и g()`;
+                
             } catch (error) {
-                console.error('Ошибка выполнения WASM функции:', error);
-                document.getElementById('output').textContent = 
-                    'Ошибка выполнения функции';
+                console.error('Ошибка выполнения:', error);
+                document.getElementById('status').textContent = 'Ошибка: ' + error.message;
             }
         });
         
