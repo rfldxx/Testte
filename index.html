@@ -1,65 +1,55 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAssembly Fibonacci</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 16px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e8f5e9;
-            border-radius: 5px;
-            white-space: pre-wrap;
-        }
-    </style>
+    <title>WASM Demo</title>
 </head>
 <body>
-    <div class="container">
-        <h1>🔢 Калькулятор Фибоначчи на WebAssembly (очередная ai попытка)</h1>
-        <p>Введите номер числа Фибоначчи:</p>
-        <input type="number" id="fibInput" min="0" max="50" value="10">
-        <button onclick="calculateSingle()">Вычислить одно число</button>
-        <button onclick="calculateSequence()">Вычислить последовательность</button>
-        
-        <div id="result" class="result"></div>
-        
-        <div style="margin-top: 30px; font-size: 14px; color: #666;">
-            <h3>📊 Информация:</h3>
-            <p>• Код на C++ скомпилирован в WebAssembly</p>
-            <p>• Вычисления выполняются в браузере</p>
-            <p>• Проект размещен на GitHub Pages</p>
-        </div>
-    </div>
+    <h2>WASM Function Demo: f(x) = x * 3</h2>
+    
+    <input type="number" id="input" value="7" style="padding: 8px; font-size: 16px;">
+    <button onclick="calc()" style="padding: 8px 16px; font-size: 16px;">Calculate</button>
+    
+    <div id="result" style="margin-top: 20px; font-size: 18px; font-weight: bold;"></div>
 
-    <script src="js/main.js"></script>
+    <script>
+        // Простой загрузчик WASM
+        async function init() {
+            // 1. Загружаем WASM файл
+            const response = await fetch('main.wasm');
+            const bytes = await response.arrayBuffer();
+            
+            // 2. Компилируем и создаём экземпляр
+            const { instance } = await WebAssembly.instantiate(bytes);
+            
+            // 3. Сохраняем экспортированные функции
+            window.wasmExports = instance.exports;
+            
+            console.log('WASM loaded!');
+        }
+        
+        // Функция для вычисления
+        function calc() {
+            if (!window.wasmExports) {
+                alert('WASM not loaded yet!');
+                return;
+            }
+            
+            const input = document.getElementById('input');
+            const value = parseInt(input.value) || 0;
+            
+            // Вызываем WASM функцию
+            const result = window.wasmExports.f(value);
+            
+            // Показываем результат
+            document.getElementById('result').textContent = 
+                `f(${value}) = ${value} * 3 = ${result}`;
+        }
+        
+        // Загружаем WASM при загрузке страницы
+        init().catch(error => {
+            console.error('Failed to load WASM:', error);
+            document.getElementById('result').textContent = 'Error loading WASM';
+        });
+    </script>
 </body>
 </html>
